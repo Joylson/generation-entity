@@ -6,7 +6,7 @@ const config = {
 	host: 'localhost',
 	user: 'postgres',
 	password: 'a',
-	database: 'itbi_caconde',
+	database: 'teste_gen_entity',
 	port: 5432,
 	database_type: 'postgres'
 };

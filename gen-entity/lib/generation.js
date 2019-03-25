@@ -43,12 +43,14 @@ checkPrimary = (column) => {
     return primaryKey;
 }
 
-literaltoCamelcase = (text) => {
+literaltoCamelcase = (text, first) => {
     let text_return = '';
     for (var i = 0; i < text.length; i++) {
-        if (text.charAt(i) !== '_') {
+        if (first && i === 0) {
+            text_return += text.charAt(i).toUpperCase();
+        } else if (text.charAt(i) !== '_') {
             text_return += text.charAt(i);
-        }else{
+        } else {
             text_return += text.charAt(++i).toUpperCase();
         }
     }
@@ -56,19 +58,19 @@ literaltoCamelcase = (text) => {
 };
 
 checkImport = (table) => {
-        let foreing = [];
-        let result = '';
-        table.columns.forEach(item => {
-            item.constraints.forEach(item2 => {
-                if(item2['constraint_type'] === 'FOREIGN KEY' && !foreing.includes({table: item2['table_name_foreign']})){
-                    foreing.push({table: item2['table_name_foreign']});
-                }
-            });
+    let foreing = [];
+    let result = '';
+    table.columns.forEach(item => {
+        item.constraints.forEach(item2 => {
+            if (item2['constraint_type'] === 'FOREIGN KEY' && !foreing.includes({ table: item2['table_name_foreign'] })) {
+                foreing.push({ table: item2['table_name_foreign'] });
+            }
         });
-        foreing.forEach(item => {
-            result += '\nimport ' + literaltoCamelcase(item.table) + ' from \'./' + literaltoCamelcase(item.table) + '\';';
-        });
-        return result;
+    });
+    foreing.forEach(item => {
+        result += '\nimport ' + literaltoCamelcase(item.table, true) + ' from \'./' + literaltoCamelcase(item.table, true) + '\';';
+    });
+    return result;
 };
 
 module.exports = async (folder_name, tables) => {
@@ -77,13 +79,13 @@ module.exports = async (folder_name, tables) => {
     tables.forEach(item => {
         let struct = loopStruct(item);
         let imports = checkImport(item);
-        let serialization = `import { Entity, PrimaryGeneratedColumn, Column } from \"typeorm\";`
+        let serialization = `import { Entity, PrimaryGeneratedColumn, Column } from \'typeorm\';`
             + `${imports}`
             + `\n\n@Entity()`
-            + `\nexport class ${item['table_name']} {`
+            + `\nexport class ${literaltoCamelcase(item['table_name'], true)} {`
             + `\n ${struct}`
             + `\n}`;
 
-        createFile('/src/' + folder_name + '/' + literaltoCamelcase(item['table_name']) + '.js', serialization);
+        createFile('/src/' + folder_name + '/' + literaltoCamelcase(item['table_name'], true) + '.js', serialization);
     });
 };
