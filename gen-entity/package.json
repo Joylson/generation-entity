@@ -1,19 +1,21 @@
 {
-  "name": "gen-entity",
-  "version": "1.0.0",
-  "description": "",
-  "main": "./lib/index.js",
-	"bin": {
-		"gen-entity": "bin/gen-entity.js"
-	},
-	"dependencies":{
-		"commander":"*"
-	},
-  "preferGlobal": "true",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "Joylson",
-  "license": "ISC"	
+ "name": "gen-entity",
+ "version": "1.0.0",
+ "description": "",
+ "main": "./lib/app.js",
+ "bin": {
+  "gen-entity": "bin/gen-entity.js"
+ },
+ "dependencies": {
+  "commander": "*",
+  "mysql": "^2.16.0",
+  "pg": "^7.9.0"
+ },
+ "preferGlobal": "true",
+ "scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1"
+ },
+ "keywords": [],
+ "author": "Joylson",
+ "license": "ISC"
 }

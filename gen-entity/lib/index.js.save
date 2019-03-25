@@ -1,0 +1,17 @@
+const { Pool } = require('pg');
+
+const config = {
+	host: 'localhost',
+	user: 'postgres',
+	password: 'a',
+	database: 'itbi_caconde',
+	port: 5432
+};
+
+const pool = new Pool(config);
+ 
+module.exports = (name) => {
+    	pool.query('SELECT * 	',(err, res) => {
+		pool.end();
+	});
+};
