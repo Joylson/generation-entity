@@ -11,11 +11,9 @@ const config = {
 	database_type: 'postgres'
 };
 
-teste = async (name) => {
+module.exports = async () => {
 	connect(config).then(res => {
 		generation('entity', res)
 	});
 };
 
-
-teste();

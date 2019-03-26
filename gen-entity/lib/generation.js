@@ -3,13 +3,13 @@ const types = require('./types');
 
 
 createFolder = (caminho) => {
-    fs.mkdir(__dirname + caminho, (err) => {
+    fs.mkdir(caminho, (err) => {
         if (err && err.code !== 'EEXIST') throw err;
     });
 };
 
 createFile = (file, dados) => {
-    fs.writeFile(__dirname + file, dados, (err) => {
+    fs.writeFile(file, dados, (err) => {
         if (err && err.code !== 'EEXIST') throw err;
     });
 };
@@ -74,8 +74,8 @@ checkImport = (table) => {
 };
 
 module.exports = async (folder_name, tables) => {
-    await createFolder('/src');
-    await createFolder('/src/' + folder_name);
+    await createFolder('./src');
+    await createFolder('./src/' + folder_name);
     tables.forEach(item => {
         let struct = loopStruct(item);
         let imports = checkImport(item);
@@ -86,6 +86,6 @@ module.exports = async (folder_name, tables) => {
             + `\n ${struct}`
             + `\n}`;
 
-        createFile('/src/' + folder_name + '/' + literaltoCamelcase(item['table_name'], true) + '.js', serialization);
+        createFile('./src/' + folder_name + '/' + literaltoCamelcase(item['table_name'], true) + '.js', serialization);
     });
 };
