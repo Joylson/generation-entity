@@ -17,7 +17,7 @@ module.exports = {
     columns: (async (config, table) => {
         let rows;
         let pool = new Pool(config);
-        await pool.query('SELECT column_name, udt_name, table_name, character_maximum_length as length FROM information_schema.columns'
+        await pool.query('SELECT column_name, udt_name, table_name, character_maximum_length as length, is_nullable FROM information_schema.columns'
             + '\nWHERE table_name = \'' + table + '\'').then(res => {
                 rows = res.rows;
             }).catch(e => {

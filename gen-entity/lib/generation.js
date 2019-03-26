@@ -21,22 +21,38 @@ loopStruct = (item) => {
         let foreign = checkForeign(item2);
         if (foreign) {
             struct += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn()' : '')
-                + '\n\t@OneToMany(type => ' + literaltoCamelcase(foreign['table'], true) + ', ' + literaltoCamelcase(foreign['table']) + ' => ' + literaltoCamelcase(foreign['table']) + '.' + literaltoCamelcase(foreign['column']) + ')'
-                + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + literaltoCamelcase(foreign['table'], true) + '[];'
+                + '\n\t@ManyToOne(type => ' + literaltoCamelcase(foreign['table'], true) + ', { nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true')+ ' })'
+                + '\n\t@JoinColumn({name : \'' + item2['column_name'] + '\'})'
+                + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + literaltoCamelcase(foreign['table'], true) + ';'
         } else {
-            struct += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn()' :
-                '\n\t@Column({ type : \'' + item2['udt_name'] + '\'' + (item2['length'] === null ? '' : ', length : ' + item2['length']) + '})')
+            struct += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn({name : \'' + item2['column_name'] + '\'})' :
+                '\n\t@Column({name : \'' + item2['column_name'] + '\', type : \'' + checkInrregular(item2['udt_name']) + '\'' + (item2['length'] === null ? '' : ', length : ' + item2['length']) + ', nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true') + '})')
                 + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + type + ';'
         }
     });
     return struct;
 };
 
+
+checkInrregular = (type) => {
+    let type_result;
+    Object.keys(typeIrregular).forEach(res => {
+        typeIrregular[res].forEach(res2 => {
+            if (type === res2) type_result = res;
+        });
+    });
+    return type_result ? type_result : type;
+};
+
+typeIrregular = {
+    'char': ['bpchar']
+};
+
 checkType = (column) => {
     let type;
     Object.keys(types).forEach((item) => {
         types[item].forEach(item2 => {
-            if (column['udt_name'] === item2) type = item;
+            if (checkInrregular(column['udt_name']) === item2) type = item;
         })
     });
     return type === null ? 'string' : type;
@@ -75,7 +91,7 @@ literaltoCamelcase = (text, first) => {
 checkImport = (table) => {
     let foreing = [];
     let result = '';
-    let count  = 0;
+    let count = 0;
     table.columns.forEach(item => {
         item.constraints.forEach(item2 => {
             if (item2['constraint_type'] === 'FOREIGN KEY'
@@ -86,13 +102,13 @@ checkImport = (table) => {
                 && !checkincludes(item2['table_name_foreign'], foreing, (obj, res) => { if (obj === res['table']) return true; })
                 && item2['table_name_foreign'] !== item2['table_name']) {
                 foreing.push({ table: item2['table_name_foreign'] });
-            }            
+            }
         });
     });
     foreing.forEach(item => {
         result += '\nimport {' + literaltoCamelcase(item.table, true) + '} from \'./' + literaltoCamelcase(item.table, true) + '\';';
     });
-    return {result, count};
+    return { result, count };
 };
 
 checkincludes = (obj, list, validate) => {
@@ -103,15 +119,26 @@ checkincludes = (obj, list, validate) => {
     return test;
 }
 
-module.exports = async (folder_name, tables) => {
+module.exports = async (folder_name, tables, camel_case) => {
+    if (!camel_case) {
+        literaltoCamelcase = (text, first) => {
+            let text_return = '';
+            for (var i = 0; i < text.length; i++) {
+                if (first && i === 0) {
+                    text_return += text.charAt(i).toUpperCase();
+                }
+            }
+            return text_return;
+        };
+    }
     await createFolder('./src');
     await createFolder('./src/' + folder_name);
     tables.forEach(item => {
         let struct = loopStruct(item);
         let imports = checkImport(item);
-        let serialization = `import { Entity, PrimaryGeneratedColumn, Column ${imports['count'] > 0 ? ', OneToMany ' : ''}} from \'typeorm\';`
+        let serialization = `import { Entity, PrimaryGeneratedColumn, Column ${imports['count'] > 0 ? ', ManyToOne, JoinColumn ' : ''}} from \'typeorm\';`
             + `${imports['result']}`
-            + `\n\n@Entity()`
+            + `\n\n@Entity({name : '${item['table_name']}'})`
             + `\nexport class ${literaltoCamelcase(item['table_name'], true)} {`
             + `\n ${struct}`
             + `\n}`;

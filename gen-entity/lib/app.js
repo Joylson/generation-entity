@@ -13,7 +13,7 @@ const config = {
 
 module.exports = async () => {
 	connect(config).then(res => {
-		generation('entity', res)
+		generation('entity', res, true)
 	});
 };
 
