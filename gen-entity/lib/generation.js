@@ -16,20 +16,32 @@ createFile = (file, dados) => {
 
 loopStruct = (item) => {
     let struct = '';
+    let struct_foreign = '';
+    let struct_primary = '';
+    let struct_coluns = '';
     item.columns.forEach(item2 => {
         let type = checkType(item2);
         let foreign = checkForeign(item2);
-        if (foreign) {
-            struct += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn()' : '')
-                + '\n\t@ManyToOne(type => ' + literaltoCamelcase(foreign['table'], true) + ', { nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true')+ ' })'
+        if (checkPrimary(item2)) {
+            struct_primary += '\n\n\t@PrimaryGeneratedColumn(' + (!checkForeign(item2) ? '{name : \'' + item2['column_name'] + '\'}' : '') + ')'
+                + (!checkForeign(item2) ? '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + type + ';' : '');
+            if (foreign) {
+                struct_primary += '\n\t@ManyToOne(type => ' + literaltoCamelcase(foreign['table'], true) + ', { nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true') + ' })'
                 + '\n\t@JoinColumn({name : \'' + item2['column_name'] + '\'})'
                 + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + literaltoCamelcase(foreign['table'], true) + ';'
-        } else {
-            struct += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn({name : \'' + item2['column_name'] + '\'})' :
-                '\n\t@Column({name : \'' + item2['column_name'] + '\', type : \'' + checkInrregular(item2['udt_name']) + '\'' + (item2['length'] === null ? '' : ', length : ' + item2['length']) + ', nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true') + '})')
+            }
+        } else if (foreign) {
+            struct_foreign += '\n\n\t@ManyToOne(type => ' + literaltoCamelcase(foreign['table'], true) + ', { nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true') + ' })'
+                + '\n\t@JoinColumn({name : \'' + item2['column_name'] + '\'})'
+                + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + literaltoCamelcase(foreign['table'], true) + ';'
+        }else {
+            struct_coluns += (checkPrimary(item2) ? '\n\t@PrimaryGeneratedColumn({name : \'' + item2['column_name'] + '\'})' :
+                '\n\n\t@Column(\'' + checkInrregular(item2['udt_name']) + '\', {name : \'' + item2['column_name'] + '\'' + (item2['length'] === null ? '' : ', length : ' + item2['length']) + ', nullable : ' + (item2['is_nullable'] === 'NO' ? 'false' : 'true') + '})')
                 + '\n\t' + literaltoCamelcase(item2['column_name']) + ' : ' + type + ';'
         }
     });
+
+    struct = struct_primary + '\n' + struct_coluns + '\n' + struct_foreign;
     return struct;
 };
 
@@ -144,5 +156,6 @@ module.exports = async (folder_name, tables, camel_case) => {
             + `\n}`;
 
         createFile('./src/' + folder_name + '/' + literaltoCamelcase(item['table_name'], true) + '.ts', serialization);
+        console.log('create entity ./src/' + folder_name + '/' + literaltoCamelcase(item['table_name'], true) + '.ts');
     });
 };
