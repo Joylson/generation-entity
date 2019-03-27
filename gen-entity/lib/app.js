@@ -1,6 +1,6 @@
 const connect = require('./connect/connecion');
 const generation = require('./generation');
-const types = require('./types');
+const chalk = require('chalk');
 
 let time = 1;
 const config = {
@@ -13,10 +13,19 @@ const config = {
 };
 
 module.exports = async () => {
-	let loadI = setInterval(load, 1000);
+	let loadI = setInterval(load, 700);
 	connect(config).then(res => {
 		clearInterval(loadI)
-		generation('entity', res, true)
+		generation('entity', res, true).then(res => {
+			console.log(chalk.green.bold('entities created successfully'));
+		}).catch(err => {
+			console.error(chalk.red.bold('exception when creating entities!!!'));
+			console.error(err);			
+		})
+	}).catch(err => {
+		clearInterval(loadI);
+		console.error(chalk.red.bold('exception when creating entities!!!'));
+		console.error(err);
 	});
 };
 

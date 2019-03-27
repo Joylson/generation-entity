@@ -29,7 +29,7 @@ module.exports = {
     constraints: (async (config, table, column) => {
         let rows;
         let pool = new Pool(config);
-        await pool.query('SELECT  tc.constraint_name, tc.table_name, kcu.column_name,'
+        await pool.query('SELECT distinct tc.constraint_name, tc.table_name, kcu.column_name,'
             + '\nccu.table_schema, ccu.table_name as table_name_foreign, ccu.column_name as column_name_foreign, tc.constraint_type FROM'
             + '\ninformation_schema.table_constraints AS tc'
             + '\nJOIN information_schema.key_column_usage AS kcu'
@@ -39,6 +39,25 @@ module.exports = {
             + '\nON ccu.constraint_name = tc.constraint_name'
             + '\nAND ccu.table_schema = tc.table_schema'
             + '\nWHERE tc.table_name = \'' + table + '\' AND kcu.column_name = \'' + column + '\'').then(res => {
+                rows = res.rows;
+            }).catch(e => {
+                throw e;
+            });
+        await pool.end();
+        return rows;
+    }), refConstraints: (async (config, table, column) => {
+        let rows;
+        let pool = new Pool(config);
+        await pool.query('SELECT distinct tc.constraint_name, tc.table_name, kcu.column_name,'
+            + '\nccu.table_schema, ccu.table_name as table_name_foreign, ccu.column_name as column_name_foreign, tc.constraint_type FROM'
+            + '\ninformation_schema.table_constraints AS tc'
+            + '\nJOIN information_schema.key_column_usage AS kcu'
+            + '\nON tc.constraint_name = kcu.constraint_name'
+            + '\nAND tc.table_schema = kcu.table_schema'
+            + '\nJOIN information_schema.constraint_column_usage AS ccu'
+            + '\nON ccu.constraint_name = tc.constraint_name'
+            + '\nAND ccu.table_schema = tc.table_schema'
+            + '\nWHERE ccu.table_name = \'' + table + '\' and tc.constraint_type = \'FOREIGN KEY\'').then(res => {
                 rows = res.rows;
             }).catch(e => {
                 throw e;
